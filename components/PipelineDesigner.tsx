@@ -271,6 +271,18 @@ const PipelineDesignerContent: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialFlowEdges);
 
+  // --- PERSISTENCE FOR EVAL STUDIO ---
+  useEffect(() => {
+     if (nodes.length > 0) {
+        // Save the active pipeline structure for other components to see
+        localStorage.setItem('active_pipeline', JSON.stringify({
+            nodes: nodes.map(n => n.data),
+            updatedAt: Date.now()
+        }));
+     }
+  }, [nodes]);
+
+
   // --- HISTORY MANAGEMENT: STABILIZED ---
   // Use refs to access current state inside callbacks without adding dependencies that cause loops
   const stateRef = useRef({ nodes, edges, historyIndex });
