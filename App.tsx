@@ -10,6 +10,7 @@ import AIConfigModal from './components/AIConfigModal';
 import RecommendationWizard from './components/RecommendationWizard';
 import ChunkingLab from './components/ChunkingLab';
 import RerankLab from './components/RerankLab';
+import EvalStudio from './components/EvalStudio';
 import { AppView } from './types';
 
 export default function App() {
@@ -26,6 +27,8 @@ export default function App() {
         return <ChunkingLab />;
       case AppView.RERANK:
         return <RerankLab />;
+      case AppView.EVAL:
+        return <EvalStudio />;
       case AppView.SANDBOX:
         return <SecuritySandbox />;
       case AppView.CHECKLIST:

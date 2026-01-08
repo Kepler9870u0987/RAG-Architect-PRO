@@ -7,7 +7,8 @@ export enum AppView {
   CONSULTANT = 'CONSULTANT',
   WIZARD = 'WIZARD',
   CHUNKING = 'CHUNKING',
-  RERANK = 'RERANK'
+  RERANK = 'RERANK',
+  EVAL = 'EVAL'
 }
 
 export enum NodeType {
@@ -66,6 +67,27 @@ export interface ScenarioState {
   nodes: PipelineNode[];
   edges: any[];
   qps: number;
+}
+
+// --- EVAL TYPES ---
+export interface EvalMetric {
+    name: string;
+    score: number; // 0.0 to 1.0
+    description: string;
+}
+
+export interface EvalRun {
+    id: string;
+    query: string;
+    retrievedContext: string[];
+    generatedAnswer: string;
+    metrics: {
+        faithfulness: number;
+        answerRelevance: number;
+        contextPrecision: number;
+    };
+    status: 'PASS' | 'FAIL';
+    reason?: string;
 }
 
 // --- AI CONFIG TYPES ---

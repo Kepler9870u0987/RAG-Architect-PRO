@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AppView } from '../types';
-import { LayoutDashboard, Network, ShieldAlert, ListTodo, MessageSquareText, Bot, Settings, MagicWand, Scissors, Layers } from './Icons';
+import { LayoutDashboard, Network, ShieldAlert, ListTodo, MessageSquareText, Bot, Settings, MagicWand, Scissors, Layers, Activity } from './Icons';
 import { APP_VERSION } from '../constants';
 
 interface NavigationProps {
@@ -17,6 +17,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate, onOpen
     { view: AppView.DESIGNER, label: 'Pipeline Designer', icon: <Network className="w-5 h-5" /> },
     { view: AppView.CHUNKING, label: 'Chunking Lab', icon: <Scissors className="w-5 h-5" /> },
     { view: AppView.RERANK, label: 'Fusion & Rerank', icon: <Layers className="w-5 h-5" /> },
+    { view: AppView.EVAL, label: 'Eval Studio', icon: <Activity className="w-5 h-5" /> },
     { view: AppView.SANDBOX, label: 'Security Sandbox', icon: <ShieldAlert className="w-5 h-5" /> },
     { view: AppView.CHECKLIST, label: 'Prod Checklist', icon: <ListTodo className="w-5 h-5" /> },
     { view: AppView.CONSULTANT, label: 'Ask Expert', icon: <MessageSquareText className="w-5 h-5" /> },

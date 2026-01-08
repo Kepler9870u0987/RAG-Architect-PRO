@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AppView } from '../types';
-import { Network, ShieldAlert, MessageSquareText, Scissors, Layers } from './Icons';
+import { Network, ShieldAlert, MessageSquareText, Scissors, Layers, Activity } from './Icons';
 
 interface DashboardProps {
   onNavigate: (view: AppView) => void;
@@ -44,6 +44,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           onClick={() => onNavigate(AppView.DESIGNER)}
         />
         <ActionCard 
+          title="Eval Studio"
+          desc="Benchmark quality with RAGAS metrics (Faithfulness, Precision)."
+          icon={<Activity className="w-6 h-6 text-emerald-600" />}
+          colorClass="bg-emerald-600"
+          onClick={() => onNavigate(AppView.EVAL)}
+        />
+        <ActionCard 
           title="Chunking Lab"
           desc="Visualize how Late Chunking preserves context vs Naive splitting."
           icon={<Scissors className="w-6 h-6 text-pink-600" />}
@@ -67,8 +74,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <ActionCard 
           title="Expert Consultant"
           desc="Chat with an AI trained on the '2026 Complete Guide'."
-          icon={<MessageSquareText className="w-6 h-6 text-emerald-600" />}
-          colorClass="bg-emerald-600"
+          icon={<MessageSquareText className="w-6 h-6 text-indigo-600" />}
+          colorClass="bg-indigo-600"
           onClick={() => onNavigate(AppView.CONSULTANT)}
         />
       </div>
