@@ -24,6 +24,7 @@ const getGeminiClient = () => {
   if (!genAI) {
     const apiKey = process.env.API_KEY; 
     if (apiKey) {
+      // FIX: Always use a named parameter for apiKey
       genAI = new GoogleGenAI({ apiKey });
     }
   }
@@ -53,6 +54,7 @@ export const streamExpertResponse = async (
     const result = await chat.sendMessageStream({ message: newMessage });
     let fullText = "";
     for await (const chunk of result) {
+      // FIX: chunk is a GenerateContentResponse, access .text property directly
       if (chunk.text) {
         fullText += chunk.text;
         onChunk(fullText);
@@ -94,6 +96,7 @@ export const generateRawResponse = async (prompt: string, systemOverride?: strin
         contents: prompt,
         config: { systemInstruction: sysInstr }
     });
+    // FIX: Access .text property directly
     return response.text || "No response generated.";
   } catch (error) { return "Error generating response."; }
 };
@@ -144,6 +147,7 @@ export const auditPrompt = async (prompt: string, aiResponse: string, customSyst
         contents: auditSystemPrompt,
         config: { responseMimeType: "application/json" }
     });
+    // FIX: Access .text property directly
     return response.text ? JSON.parse(response.text) : { safe: false, analysis: "Parsing failed" };
   } catch (error) { return { safe: false, analysis: "Error during audit." }; }
 };

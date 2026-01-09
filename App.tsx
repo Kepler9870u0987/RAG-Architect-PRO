@@ -11,6 +11,10 @@ import RecommendationWizard from './components/RecommendationWizard';
 import ChunkingLab from './components/ChunkingLab';
 import RerankLab from './components/RerankLab';
 import EvalStudio from './components/EvalStudio';
+import RoutingLab from './components/RoutingLab';
+import GraphExplorer from './components/GraphExplorer';
+import CostROI from './components/CostROI';
+import SelfRagDebug from './components/SelfRagDebug';
 import { AppView } from './types';
 
 export default function App() {
@@ -31,6 +35,14 @@ export default function App() {
         return <EvalStudio />;
       case AppView.SANDBOX:
         return <SecuritySandbox />;
+      case AppView.ROUTING:
+        return <RoutingLab />;
+      case AppView.GRAPH:
+        return <GraphExplorer />;
+      case AppView.ROI:
+        return <CostROI />;
+      case AppView.DEBUGGER:
+        return <SelfRagDebug />;
       case AppView.CHECKLIST:
         return <Checklist />;
       case AppView.CONSULTANT:

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -5,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>RAG Architect Pro 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
       /* Custom Scrollbar for sleek look */
       ::-webkit-scrollbar {
@@ -21,6 +23,18 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #94a3b8; 
       }
+      
+      /* Markdown Styles for AI Responses */
+      .prose-ai h1 { font-size: 1.25rem; font-weight: 800; margin-bottom: 0.75rem; color: #fff; }
+      .prose-ai h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; margin-top: 1rem; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 2px; }
+      .prose-ai h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; color: #cbd5e1; }
+      .prose-ai p { margin-bottom: 0.75rem; line-height: 1.6; }
+      .prose-ai ul, .prose-ai ol { margin-bottom: 0.75rem; padding-left: 1.25rem; }
+      .prose-ai li { margin-bottom: 0.25rem; list-style-type: disc; }
+      .prose-ai code { background: rgba(0,0,0,0.3); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.85em; }
+      .prose-ai pre { background: #0f172a; padding: 1rem; border-radius: 8px; overflow-x: auto; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.1); }
+      .prose-ai pre code { background: transparent; padding: 0; color: #38bdf8; }
+      .prose-ai strong { color: #fff; font-weight: 700; }
     </style>
   <script type="importmap">
 {
