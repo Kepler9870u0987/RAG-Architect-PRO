@@ -34,6 +34,10 @@ export interface PipelineNode {
   baseCost: number;
   isDimmed?: boolean;
   isProcessing?: boolean;
+  // Advanced Configurations
+  hybridConfig?: { alpha: number; k1: number; b: number };
+  rrfK?: number;
+  ragasTargets?: { faithfulness: number; relevance: number };
 }
 
 export interface ChatMessage {

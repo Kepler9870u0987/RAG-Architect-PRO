@@ -82,7 +82,8 @@ const AIConfigModal: React.FC<AIConfigModalProps> = ({ isOpen, onClose }) => {
                 }`}
               >
                 <div className={`p-3 rounded-xl transition-all ${config.provider === prov.id ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-400'}`}>
-                  {React.cloneElement(prov.icon as React.ReactElement, { className: 'w-6 h-6' })}
+                  {/* FIX: Cast to any to avoid className property missing error on unknown attributes */}
+                  {React.cloneElement(prov.icon as any, { className: 'w-6 h-6' })}
                 </div>
                 <div className="text-center">
                   <div className="font-black text-sm">{prov.label}</div>

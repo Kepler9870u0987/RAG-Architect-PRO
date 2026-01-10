@@ -19,7 +19,7 @@ import ReactFlow, {
   Node
 } from 'reactflow';
 import { PipelineNode, NodeType } from '../types';
-import { Zap, Code, PlayCircle, X, Settings, Check, Plus, Trash, Save, Search, Undo, Redo, FileText, Binary, Database, Braces, ListTodo, MessageSquareText, ShieldAlert } from './Icons';
+import { Zap, Code, PlayCircle, X, Settings, Check, Plus, Trash, Save, Search, Undo, Redo, FileText, Binary, Database, Braces, ListTodo, MessageSquareText, ShieldAlert, Layers, Activity, GitMerge } from './Icons';
 import { DEFAULT_NODES, NODE_IO_DATA } from '../constants';
 
 const generatePython = (nodes: any[]) => {
@@ -28,7 +28,16 @@ const generatePython = (nodes: any[]) => {
   let setup = `# --- RAG Pipeline Configuration (Generated) ---\n\nclass RAGPipeline:\n    def __init__(self):\n        self.steps = []\n        print("Initializing Pipeline...")\n`;
   
   activeNodes.forEach(node => {
-    setup += `        \n        # Step: ${node.label}\n        # Type: ${node.type}\n        # Model: ${node.model}\n        self.steps.append({\n            "name": "${node.label}",\n            "model": "${node.model}",\n            "latency_budget": ${node.baseLatency}\n        })\n`;
+    let extraConfig = "";
+    if (node.type === NodeType.RETRIEVAL && node.hybridConfig) {
+        extraConfig = `\n            "hybrid_params": {\n                "alpha": ${node.hybridConfig.alpha},  # Dense weight\n                "bm25_k1": ${node.hybridConfig.k1},\n                "bm25_b": ${node.hybridConfig.b}\n            },`;
+    } else if (node.type === NodeType.RERANK && node.rrfK) {
+        extraConfig = `\n            "rrf_k": ${node.rrfK},  # Reciprocal Rank Fusion constant`;
+    } else if (node.type === NodeType.GENERATION && node.ragasTargets) {
+        extraConfig = `\n            "eval_targets": {\n                "min_faithfulness": ${node.ragasTargets.faithfulness},\n                "min_relevance": ${node.ragasTargets.relevance}\n            },`;
+    }
+
+    setup += `        \n        # Step: ${node.label}\n        # Type: ${node.type}\n        # Model: ${node.model}\n        self.steps.append({\n            "name": "${node.label}",\n            "model": "${node.model}",\n            "latency_budget": ${node.baseLatency},${extraConfig}\n        })\n`;
   });
 
   setup += `\n    def run(self, query: str):\n        print(f"Processing Query: {query}")\n        context = None\n        \n        for step in self.steps:\n            print(f"  --> Running {step['name']} using {step['model']}...")\n            \n        return "Pipeline Execution Complete"\n\nif __name__ == "__main__":\n    rag = RAGPipeline()\n    rag.run("How do I implement Late Chunking?")`;
@@ -125,8 +134,25 @@ const CustomPipelineNode = ({ data, id, selected }: NodeProps) => {
             <option>CoT-Reranker</option>
             <option>Presidio</option>
             <option>Self-RAG Critic</option>
+            <option>BM25 + BGE-M3 (Hybrid)</option>
+            <option>Neo4j + GraphRAG</option>
           </select>
         </div>
+        
+        {/* Advanced Config Indicators */}
+        <div className="flex gap-2 mb-2">
+            {data.type === NodeType.RETRIEVAL && data.hybridConfig && (
+                <span className="text-[9px] font-mono bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100">
+                    α={data.hybridConfig.alpha}
+                </span>
+            )}
+            {data.type === NodeType.RERANK && data.rrfK && (
+                <span className="text-[9px] font-mono bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded border border-purple-100">
+                    k={data.rrfK}
+                </span>
+            )}
+        </div>
+
         <div className="flex justify-between text-[10px] text-slate-500 font-black bg-slate-50 p-2.5 rounded-xl relative z-10 border border-slate-100 uppercase tracking-tighter">
             <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-amber-500"/> {Math.round(data.baseLatency)}ms</span>
             <span className="text-slate-400">${data.baseCost.toFixed(2)}/1M</span>
@@ -188,7 +214,13 @@ const PipelineDesignerContent: React.FC = () => {
         type: 'pipelineNode',
         // EQUIDISTANT LAYOUT: Nodes are perfectly aligned vertically with a fixed step
         position: { x: 300, y: idx * 180 + 40 },
-        data: { ...n }
+        data: { 
+            ...n,
+            // Ensure defaults for advanced config if missing
+            hybridConfig: n.hybridConfig || { alpha: 0.5, k1: 1.2, b: 0.75 },
+            rrfK: n.rrfK || 60,
+            ragasTargets: n.ragasTargets || { faithfulness: 0.85, relevance: 0.85 }
+        }
     }));
     setNodes(flowNodes);
   }, []);
@@ -203,12 +235,28 @@ const PipelineDesignerContent: React.FC = () => {
     takeSnapshot();
   }, [setNodes, takeSnapshot]);
 
+  const onMetaChange = useCallback((id: string, key: string, value: any) => {
+    setNodes(nds => nds.map(node => 
+        node.id === id 
+        ? { ...node, data: { ...node.data, [key]: value } } 
+        : node
+    ));
+    takeSnapshot();
+  }, [setNodes, takeSnapshot]);
+
   const onNodeClick = useCallback((id: string) => { setSelectedNodeId(id); setIsInspectorOpen(true); }, []);
 
   useEffect(() => {
       setNodes(nds => nds.map(node => ({
           ...node,
-          data: { ...node.data, onToggle, onModelChange, onClick: onNodeClick, isProcessing: node.id === simStep.nodeId, isDimmed: searchQuery ? !node.data.label.toLowerCase().includes(searchQuery.toLowerCase()) : false }
+          data: { 
+              ...node.data, 
+              onToggle, 
+              onModelChange, 
+              onClick: onNodeClick, 
+              isProcessing: node.id === simStep.nodeId, 
+              isDimmed: searchQuery ? !node.data.label.toLowerCase().includes(searchQuery.toLowerCase()) : false 
+          }
       })));
   }, [onToggle, onModelChange, onNodeClick, simStep, searchQuery, setNodes]);
 
@@ -346,7 +394,7 @@ const PipelineDesignerContent: React.FC = () => {
                         </div>
                         <button onClick={() => setIsInspectorOpen(false)} className="p-2.5 bg-white hover:bg-slate-100 rounded-xl transition-all border border-slate-200 text-slate-400 hover:text-slate-600 shadow-sm"><X className="w-5 h-5"/></button>
                     </div>
-                    <div className="p-8 space-y-8">
+                    <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
                         <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
                              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-5">Functional Logic Path</h4>
                              <div className="flex items-center justify-between px-2">
@@ -365,8 +413,79 @@ const PipelineDesignerContent: React.FC = () => {
                                     <option>Gemini 3 Flash</option>
                                     <option>Semantic Router (BERT)</option>
                                     <option>BM25 Only</option>
+                                    <option>BM25 + BGE-M3 (Hybrid)</option>
+                                    <option>Neo4j + GraphRAG</option>
+                                    <option>CoT-Reranker</option>
                                  </select>
                              </div>
+
+                             {/* --- ADVANCED CONFIGURATION SECTIONS --- */}
+                             
+                             {/* RETRIEVAL: Hybrid Config */}
+                             {selectedNodeData.type === NodeType.RETRIEVAL && (
+                                <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-4 animate-in fade-in slide-in-from-top-2">
+                                    <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2"><Layers className="w-3 h-3"/> Hybrid Search Config</h4>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
+                                                <span>Sparse (Keyword)</span>
+                                                <span className="text-blue-600">Alpha: {selectedNodeData.hybridConfig?.alpha || 0.5}</span>
+                                                <span>Dense (Vector)</span>
+                                            </div>
+                                            <input 
+                                                type="range" min="0" max="1" step="0.1" 
+                                                value={selectedNodeData.hybridConfig?.alpha || 0.5} 
+                                                onChange={(e) => onMetaChange(selectedNodeId, 'hybridConfig', { ...selectedNodeData.hybridConfig, alpha: parseFloat(e.target.value) })}
+                                                className="w-full h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="text-[9px] font-bold text-slate-400 block mb-1">BM25 k1</label>
+                                                <input type="number" step="0.1" value={selectedNodeData.hybridConfig?.k1 || 1.2} onChange={(e) => onMetaChange(selectedNodeId, 'hybridConfig', {...selectedNodeData.hybridConfig, k1: parseFloat(e.target.value)})} className="w-full p-2 text-xs font-bold border border-slate-200 rounded-lg"/>
+                                            </div>
+                                            <div>
+                                                <label className="text-[9px] font-bold text-slate-400 block mb-1">BM25 b</label>
+                                                <input type="number" step="0.01" value={selectedNodeData.hybridConfig?.b || 0.75} onChange={(e) => onMetaChange(selectedNodeId, 'hybridConfig', {...selectedNodeData.hybridConfig, b: parseFloat(e.target.value)})} className="w-full p-2 text-xs font-bold border border-slate-200 rounded-lg"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                             )}
+
+                             {/* RERANK: RRF Config */}
+                             {selectedNodeData.type === NodeType.RERANK && (
+                                <div className="p-4 bg-purple-50/50 rounded-2xl border border-purple-100 space-y-4 animate-in fade-in slide-in-from-top-2">
+                                     <h4 className="text-[10px] font-black text-purple-500 uppercase tracking-widest flex items-center gap-2"><GitMerge className="w-3 h-3"/> Fusion Strategy (RRF)</h4>
+                                     <div>
+                                        <label className="text-[9px] font-bold text-slate-400 block mb-1">Rank Constant (k)</label>
+                                        <div className="flex gap-2">
+                                            <input type="number" value={selectedNodeData.rrfK || 60} onChange={(e) => onMetaChange(selectedNodeId, 'rrfK', parseInt(e.target.value))} className="w-20 p-2 text-xs font-bold border border-slate-200 rounded-lg text-center"/>
+                                            <p className="text-[10px] text-slate-400 leading-tight flex-1">
+                                                Higher 'k' (e.g. 60) reduces the impact of outliers in ranking fusion. Formula: <code>1 / (k + rank)</code>
+                                            </p>
+                                        </div>
+                                     </div>
+                                </div>
+                             )}
+
+                             {/* GENERATION / GUARDRAIL: RAGAS Metrics */}
+                             {(selectedNodeData.type === NodeType.GENERATION || selectedNodeData.type === NodeType.GUARDRAIL) && (
+                                <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 space-y-4 animate-in fade-in slide-in-from-top-2">
+                                     <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2"><Activity className="w-3 h-3"/> RAGAS Quality Gates</h4>
+                                     <div className="grid grid-cols-2 gap-4">
+                                         <div>
+                                             <label className="text-[9px] font-bold text-slate-400 block mb-1">Min Faithfulness</label>
+                                             <input type="number" step="0.05" max="1" value={selectedNodeData.ragasTargets?.faithfulness || 0.85} onChange={(e) => onMetaChange(selectedNodeId, 'ragasTargets', {...selectedNodeData.ragasTargets, faithfulness: parseFloat(e.target.value)})} className="w-full p-2 text-xs font-bold border border-slate-200 rounded-lg text-emerald-700"/>
+                                         </div>
+                                         <div>
+                                             <label className="text-[9px] font-bold text-slate-400 block mb-1">Min Relevance</label>
+                                             <input type="number" step="0.05" max="1" value={selectedNodeData.ragasTargets?.relevance || 0.85} onChange={(e) => onMetaChange(selectedNodeId, 'ragasTargets', {...selectedNodeData.ragasTargets, relevance: parseFloat(e.target.value)})} className="w-full p-2 text-xs font-bold border border-slate-200 rounded-lg text-emerald-700"/>
+                                         </div>
+                                     </div>
+                                </div>
+                             )}
+
                              <div className="grid grid-cols-2 gap-4">
                                  <div className="space-y-2">
                                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Latency (ms)</label>

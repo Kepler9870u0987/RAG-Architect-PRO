@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Layers, Search, ArrowDownUp, GitMerge, FileText, Zap, RefreshCw, Check, Binary } from './Icons';
+import { Layers, Search, ArrowDownUp, GitMerge, FileText, Zap, RefreshCw, Check, Binary, ChevronDown, Activity } from './Icons';
 
-// Expanded Mock Data for "Hybrid Search" simulation
 const DATASET = [
     { id: 'D1', title: 'Payment Gateway Error 503', content: 'If the API returns 503 Service Unavailable, the upstream provider is down. Retry with exponential backoff.', keywords: ['503', 'error', 'payment', 'gateway', 'retry'] },
     { id: 'D2', title: 'Configuring Retry Logic', content: 'Implementing exponential backoff is crucial for handling transient network errors.', keywords: ['retry', 'backoff', 'network', 'error'] },
@@ -10,37 +9,23 @@ const DATASET = [
     { id: 'D4', title: 'API Authentication', content: 'Use Bearer tokens for all gateway requests.', keywords: ['api', 'auth', 'token', 'gateway'] },
     { id: 'D5', title: 'Service Status Page', content: 'Check status.gateway.com for uptime reports.', keywords: ['status', 'uptime', 'page', 'service'] },
     { id: 'D6', title: 'Late Chunking Benefits', content: 'Preserves context by embedding full docs before splitting into chunks.', keywords: ['chunking', 'late', 'context', 'embedding'] },
-    { id: 'D7', title: 'Semantic Router Guide', content: 'Route queries based on intent using lightweight embedding models.', keywords: ['router', 'semantic', 'intent', 'routing'] },
-    { id: 'D8', title: 'Rate Limiting Policies', content: 'Prevents abuse by limiting API calls per user per minute.', keywords: ['rate', 'limit', 'policy', 'abuse'] },
-    { id: 'D9', title: 'Vector DB Indexing', content: 'HNSW vs IVF: Choosing the right indexing strategy for scalability.', keywords: ['vector', 'index', 'hnsw', 'ivf', 'db'] },
-    { id: 'D10', title: 'ColBERT Multi-vector Search', content: 'Token-level late interaction for high precision retrieval.', keywords: ['colbert', 'token', 'search', 'precision'] },
-    { id: 'D11', title: 'Metadata Extraction 2026', content: 'Extracting NER and RE improves multi-hop graph disambiguation.', keywords: ['ner', 're', 'metadata', 'graph'] },
-    { id: 'D12', title: 'Cache-Control for RAG', content: 'Semantic caching stores query embeddings to skip LLM calls.', keywords: ['cache', 'semantic', 'embedding', 'cost'] },
 ];
 
 const RANDOM_QUERIES = [
     "How to handle 503 errors?",
     "What is the policy for refunds?",
     "Explain late chunking vs naive",
-    "Best way to implement retry backoff",
-    "API token authentication guide",
-    "Metadata extraction in graphRAG",
-    "Improving vector search speed"
+    "Best way to implement retry backoff"
 ];
 
 const RerankLab: React.FC = () => {
     const [query, setQuery] = useState(RANDOM_QUERIES[0]);
     const [isSimulating, setIsSimulating] = useState(false);
-    const [step, setStep] = useState(0); // 0: Idle, 1: Searching, 2: Fusing, 3: Completed
-
+    const [step, setStep] = useState(0); 
     const [bm25Results, setBm25Results] = useState<any[]>([]);
     const [vecResults, setVecResults] = useState<any[]>([]);
     const [rrfResults, setRrfResults] = useState<any[]>([]);
-
-    const shuffleQuery = () => {
-        const next = RANDOM_QUERIES[Math.floor(Math.random() * RANDOM_QUERIES.length)];
-        setQuery(next);
-    };
+    const [showExplanation, setShowExplanation] = useState(true);
 
     const runSimulation = () => {
         if (isSimulating) return;
@@ -59,8 +44,8 @@ const RerankLab: React.FC = () => {
                  return { ...doc, scoreBM25: bm25Score, scoreVec: vecScore };
             });
 
-            const bm25 = [...scoredDocs].sort((a, b) => b.scoreBM25 - a.scoreBM25).slice(0, 6);
-            const vector = [...scoredDocs].sort((a, b) => b.scoreVec - a.scoreVec).slice(0, 6);
+            const bm25 = [...scoredDocs].sort((a, b) => b.scoreBM25 - a.scoreBM25).slice(0, 5);
+            const vector = [...scoredDocs].sort((a, b) => b.scoreVec - a.scoreVec).slice(0, 5);
             
             setBm25Results(bm25);
             setVecResults(vector);
@@ -90,154 +75,168 @@ const RerankLab: React.FC = () => {
                 setRrfResults(merged);
                 setStep(3);
                 setIsSimulating(false);
-            }, 1800);
-        }, 1200);
+            }, 1500);
+        }, 1000);
     };
 
     return (
-        <div className="p-8 max-w-7xl mx-auto h-full overflow-hidden flex flex-col">
-            <header className="mb-6 shrink-0">
-                <h2 className="text-2xl font-bold text-slate-900 mb-1 flex items-center gap-2">
-                    <Layers className="text-purple-600" /> Fusion & Rerank Studio
-                </h2>
-                <p className="text-slate-500">Hybrid Search + Reciprocal Rank Fusion (RRF) Visualizer.</p>
+        <div className="p-8 max-w-7xl mx-auto h-full overflow-hidden flex flex-col gap-6">
+            <header className="shrink-0 flex justify-between items-start">
+                <div>
+                    <h2 className="text-3xl font-black text-slate-900 mb-1 flex items-center gap-3">
+                        <Layers className="text-indigo-600 w-8 h-8" /> 
+                        RRF Fusion Strategy <span className="text-indigo-600">2026</span>
+                    </h2>
+                    <p className="text-slate-500 font-medium">Reciprocal Rank Fusion: unire Sparse e Dense search senza bias di scala.</p>
+                </div>
+                <button 
+                  onClick={() => setShowExplanation(!showExplanation)}
+                  className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
+                >
+                   <Activity className="w-4 h-4 text-indigo-500" /> {showExplanation ? "Nascondi Teoria" : "Mostra Teoria"}
+                </button>
             </header>
 
-            {/* How it Works: Dynamic Scoring Explanation */}
-            <div className="bg-slate-900 rounded-2xl p-6 text-white mb-6 relative overflow-hidden shadow-xl border border-slate-800">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <GitMerge className="w-24 h-24 text-indigo-500 animate-pulse"/>
-                </div>
-                
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Zap className="text-amber-400 w-4 h-4"/> RRF Logic Flow: 1 / (k + rank)
-                </h3>
-
-                <div className="flex items-center gap-8 relative z-10">
-                    <div className="flex-1">
-                        <div className="text-sm text-slate-400 leading-relaxed max-w-lg">
-                            RRF unisce i risultati di diverse strategie di ricerca senza normalizzare i punteggi grezzi. 
-                            Premiamo i documenti che appaiono costantemente nelle prime posizioni di entrambi i "segnali".
+            {showExplanation && (
+                <div className="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500 shrink-0">
+                    <div className="absolute top-0 right-0 p-8 opacity-10">
+                        <GitMerge className="w-32 h-32 animate-pulse" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+                        <div className="space-y-3">
+                            <h4 className="text-amber-400 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                                <Zap className="w-4 h-4" /> Il Problema della Scala
+                            </h4>
+                            <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                                BM25 produce punteggi illimitati (>20), mentre i Vector Embeddings producono cosine similarity (0-1). Non si possono sommare direttamente.
+                            </p>
+                        </div>
+                        <div className="space-y-3">
+                            <h4 className="text-indigo-400 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                                <FileText className="w-4 h-4" /> La Soluzione RRF
+                            </h4>
+                            <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                                RRF converte i punteggi in **Posizioni (Rank)**. Se un documento è 1° in BM25 e 1° in Vector, vince sempre, a prescindere dal valore del punteggio.
+                            </p>
+                        </div>
+                        <div className="space-y-3">
+                            <h4 className="text-emerald-400 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                                <Check className="w-4 h-4" /> Formula Standard (k=60)
+                            </h4>
+                            <div className="bg-black/30 p-3 rounded-xl font-mono text-[11px] border border-white/10">
+                                Score = Σ (1 / (k + Rank_i))
+                            </div>
+                            <p className="text-[10px] text-slate-400 italic">La costante k mitiga l'impatto di documenti con rank basso.</p>
                         </div>
                     </div>
-                    {step === 3 && rrfResults[0] && (
-                        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 animate-in zoom-in-95">
-                            <div className="text-[10px] font-bold text-indigo-400 uppercase mb-2">Winner Calculation (D1)</div>
-                            <div className="flex items-center gap-3 font-mono text-sm">
-                                <span>1 / (60 + {rrfResults[0].rankBM25 > 0 ? rrfResults[0].rankBM25 : '∞'})</span>
-                                <span className="text-slate-500">+</span>
-                                <span>1 / (60 + {rrfResults[0].rankVec > 0 ? rrfResults[0].rankVec : '∞'})</span>
-                                <span className="text-slate-500">=</span>
-                                <span className="text-amber-400 font-bold">{rrfResults[0].scoreRRF.toFixed(4)}</span>
-                            </div>
-                        </div>
-                    )}
                 </div>
-            </div>
+            )}
 
-            {/* Controls */}
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 shrink-0 flex gap-3 items-center">
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 shrink-0 flex gap-4 items-center">
                 <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-3 text-slate-400 w-5 h-5"/>
+                    <Search className="absolute left-4 top-3.5 text-slate-400 w-5 h-5"/>
                     <input 
                         type="text" 
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Type or shuffle a query..."
-                        className="w-full pl-10 pr-24 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-slate-700 font-medium transition-all"
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none font-bold text-slate-800 transition-all"
+                        placeholder="Inserisci una query tecnica..."
                     />
-                    <button 
-                        onClick={shuffleQuery}
-                        className="absolute right-2 top-1.5 p-1.5 hover:bg-slate-200 rounded-lg transition-colors text-slate-400"
-                        title="Random Query"
-                    >
-                        <RefreshCw className="w-4 h-4"/>
-                    </button>
                 </div>
                 <button 
                     onClick={runSimulation}
                     disabled={isSimulating}
-                    className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
+                    className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-xl shadow-indigo-200 transition-all active:scale-95 flex items-center gap-3 disabled:opacity-50 text-xs uppercase tracking-widest"
                 >
                     {isSimulating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <GitMerge className="w-4 h-4" />}
-                    Simulate RRF
+                    Compute RRF
                 </button>
             </div>
 
-            {/* Results Animation Grid */}
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0 overflow-hidden">
-                {/* Sparse Column */}
-                <div className={`flex flex-col bg-slate-50 rounded-2xl border transition-all duration-700 overflow-hidden ${step >= 1 ? 'border-blue-400 bg-blue-50/20' : 'border-slate-200 opacity-40'}`}>
-                    <div className="p-3 bg-slate-100/80 border-b border-slate-200 font-bold text-slate-600 text-[10px] uppercase tracking-wider flex justify-between items-center">
-                        <span className="flex items-center gap-2"><FileText className="w-3 h-3"/> Sparse (BM25)</span>
-                        {step === 1 && <RefreshCw className="w-3 h-3 animate-spin"/>}
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-8 min-h-0 overflow-hidden">
+                <div className={`flex flex-col bg-white rounded-3xl border-2 transition-all duration-700 overflow-hidden shadow-sm ${step >= 1 ? 'border-blue-500' : 'border-slate-100 opacity-40'}`}>
+                    <div className="p-4 bg-blue-50 border-b border-blue-100 flex justify-between items-center">
+                        <span className="font-black text-[10px] text-blue-700 uppercase tracking-widest flex items-center gap-2">
+                           <FileText className="w-4 h-4"/> Signal A: Sparse (BM25)
+                        </span>
                     </div>
-                    <div className="p-3 space-y-2 overflow-y-auto custom-scrollbar">
+                    <div className="p-4 space-y-3 overflow-y-auto custom-scrollbar bg-slate-50/50">
                         {bm25Results.map((doc, i) => (
-                            <div key={doc.id} className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm animate-in slide-in-from-left-4" style={{animationDelay: `${i*50}ms`}}>
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className="text-[9px] font-bold text-blue-600">RANK #{i+1}</span>
-                                    <span className="text-[8px] font-mono text-slate-400">BM25: {(doc.scoreBM25 * 10).toFixed(2)}</span>
+                            <div key={doc.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm animate-in slide-in-from-left-4" style={{animationDelay: `${i*100}ms`}}>
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase">Rank #{i+1}</span>
+                                    <span className="text-[10px] font-mono font-bold text-slate-400">Punti: {(doc.scoreBM25 * 10).toFixed(2)}</span>
                                 </div>
-                                <div className="text-[11px] font-bold text-slate-800 truncate">{doc.title}</div>
+                                <div className="text-xs font-black text-slate-800 leading-snug">{doc.title}</div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Dense Column */}
-                <div className={`flex flex-col bg-slate-50 rounded-2xl border transition-all duration-700 overflow-hidden ${step >= 1 ? 'border-emerald-400 bg-emerald-50/20' : 'border-slate-200 opacity-40'}`}>
-                    <div className="p-3 bg-slate-100/80 border-b border-slate-200 font-bold text-slate-600 text-[10px] uppercase tracking-wider flex justify-between items-center">
-                        <span className="flex items-center gap-2"><Binary className="w-3 h-3"/> Dense (Vector)</span>
-                        {step === 1 && <RefreshCw className="w-3 h-3 animate-spin"/>}
+                <div className={`flex flex-col bg-white rounded-3xl border-2 transition-all duration-700 overflow-hidden shadow-sm ${step >= 1 ? 'border-emerald-500' : 'border-slate-100 opacity-40'}`}>
+                    <div className="p-4 bg-emerald-50 border-b border-emerald-100 flex justify-between items-center">
+                        <span className="font-black text-[10px] text-emerald-700 uppercase tracking-widest flex items-center gap-2">
+                           <Binary className="w-4 h-4"/> Signal B: Dense (Vector)
+                        </span>
                     </div>
-                    <div className="p-3 space-y-2 overflow-y-auto custom-scrollbar">
+                    <div className="p-4 space-y-3 overflow-y-auto custom-scrollbar bg-slate-50/50">
                         {vecResults.map((doc, i) => (
-                            <div key={doc.id} className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm animate-in slide-in-from-right-4" style={{animationDelay: `${i*50}ms`}}>
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className="text-[9px] font-bold text-emerald-600">RANK #{i+1}</span>
-                                    <span className="text-[8px] font-mono text-slate-400">SIM: {doc.scoreVec.toFixed(3)}</span>
+                            <div key={doc.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm animate-in slide-in-from-bottom-4" style={{animationDelay: `${i*100}ms`}}>
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase">Rank #{i+1}</span>
+                                    <span className="text-[10px] font-mono font-bold text-slate-400">Sim: {doc.scoreVec.toFixed(3)}</span>
                                 </div>
-                                <div className="text-[11px] font-bold text-slate-800 truncate">{doc.title}</div>
+                                <div className="text-xs font-black text-slate-800 leading-snug">{doc.title}</div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Unified Column (Output) */}
-                <div className={`flex flex-col bg-slate-900 rounded-2xl border transition-all duration-1000 overflow-hidden ${step === 3 ? 'border-purple-500 shadow-2xl' : 'border-slate-800 opacity-40'}`}>
-                    <div className="p-3 bg-slate-800 border-b border-slate-700 font-bold text-purple-400 text-[10px] uppercase tracking-wider flex justify-between items-center">
-                        <span className="flex items-center gap-2"><GitMerge className="w-3 h-3"/> RRF Output</span>
-                        {step === 2 && <RefreshCw className="w-3 h-3 animate-spin text-purple-500"/>}
+                <div className={`flex flex-col bg-slate-900 rounded-3xl border-2 transition-all duration-1000 overflow-hidden shadow-2xl ${step === 3 ? 'border-indigo-500' : 'border-slate-800 opacity-40'}`}>
+                    <div className="p-4 bg-indigo-950/50 border-b border-indigo-900 flex justify-between items-center">
+                        <span className="font-black text-[10px] text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                           <GitMerge className="w-4 h-4"/> Final Fused Ranking (RRF)
+                        </span>
                     </div>
-                    <div className="p-3 space-y-2 overflow-y-auto custom-scrollbar relative">
+                    <div className="p-4 space-y-4 overflow-y-auto custom-scrollbar relative bg-slate-900/50">
                         {step === 2 && (
-                            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm">
-                                <RefreshCw className="w-8 h-8 text-purple-500 animate-spin mb-2"/>
-                                <span className="text-[10px] text-purple-400 font-bold uppercase tracking-widest">Fusing Signals...</span>
+                            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/90 backdrop-blur-sm">
+                                <RefreshCw className="w-10 h-10 text-indigo-500 animate-spin mb-4"/>
+                                <span className="text-xs text-indigo-400 font-black uppercase tracking-widest">Applying RRF Algorithm...</span>
                             </div>
                         )}
                         {rrfResults.map((doc, i) => (
                             <div 
                                 key={doc.id} 
-                                className={`p-3 rounded-xl border transition-all duration-500 ${i === 0 ? 'bg-purple-600/10 border-purple-500 shadow-lg shadow-purple-500/5' : 'bg-slate-800 border-slate-700'}`}
-                                style={{animationDelay: `${i*100}ms`}}
+                                className={`p-5 rounded-2xl border transition-all duration-500 ${i === 0 ? 'bg-indigo-600/20 border-indigo-500 shadow-lg shadow-indigo-500/20' : 'bg-slate-800/50 border-slate-700'}`}
+                                style={{animationDelay: `${i*150}ms`}}
                             >
-                                <div className="flex justify-between items-center mb-1.5">
-                                    <div className="flex items-center gap-2">
-                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${i === 0 ? 'bg-purple-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
+                                <div className="flex justify-between items-center mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black ${i === 0 ? 'bg-indigo-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
                                             {i + 1}
                                         </div>
-                                        {i === 0 && <span className="text-[8px] bg-amber-500 text-slate-900 px-1 rounded font-bold animate-pulse">WINNER</span>}
+                                        {i === 0 && <span className="text-[9px] bg-amber-500 text-slate-950 px-2 py-0.5 rounded font-black animate-pulse">OPTIMAL PICK</span>}
                                     </div>
-                                    <span className="text-[10px] font-mono font-bold text-purple-400">{doc.scoreRRF.toFixed(4)}</span>
+                                    <span className="text-xs font-mono font-black text-indigo-400">{doc.scoreRRF.toFixed(4)}</span>
                                 </div>
-                                <div className={`text-xs font-bold truncate mb-2 ${i === 0 ? 'text-white' : 'text-slate-300'}`}>{doc.title}</div>
-                                <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                                    <div 
-                                        className="h-full bg-gradient-to-r from-purple-600 to-indigo-400 transition-all duration-1000"
-                                        style={{ width: `${(doc.scoreRRF / rrfResults[0].scoreRRF) * 100}%` }}
-                                    ></div>
+                                <div className={`text-sm font-black mb-4 leading-tight ${i === 0 ? 'text-white' : 'text-slate-300'}`}>{doc.title}</div>
+                                
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                                        <span>Calculation breakdown</span>
+                                        <span className="text-indigo-500">K = 60</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="bg-black/30 p-2 rounded-lg border border-white/5 text-center">
+                                            <div className="text-[8px] text-slate-500 uppercase mb-1">Sparse Rank</div>
+                                            <div className="text-[10px] font-mono text-blue-400">{doc.rankBM25 > 0 ? `1 / (60+${doc.rankBM25})` : '0'}</div>
+                                        </div>
+                                        <div className="bg-black/30 p-2 rounded-lg border border-white/5 text-center">
+                                            <div className="text-[8px] text-slate-500 uppercase mb-1">Dense Rank</div>
+                                            <div className="text-[10px] font-mono text-emerald-400">{doc.rankVec > 0 ? `1 / (60+${doc.rankVec})` : '0'}</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}
